@@ -30,8 +30,7 @@
         "*://google.com/*",
         "*://*.duckduckgo.com/*",
         "*://duckduckgo.com/*"
-      ],
-      "use_dynamic_url": true
+      ]
     }
   ]
 }
