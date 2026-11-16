@@ -1,0 +1,21 @@
+{
+  "name": "stremio-google-search",
+  "version": "2.0.0",
+  "description": "Adds Stremio to the watch movie/series button in Google Search and DuckDuckGo",
+  "scripts": {
+    "sync": "node sync.js",
+    "test": "node --test test/extension.test.js",
+    "lint": "npx web-ext lint --source-dir ./firefox",
+    "build": "node build.js"
+  },
+  "keywords": [
+    "stremio",
+    "google-search",
+    "duckduckgo",
+    "browser-extension",
+    "chrome-extension",
+    "firefox-addon"
+  ],
+  "author": "",
+  "license": "MIT"
+}
