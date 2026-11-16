@@ -78,6 +78,35 @@ class MockElement {
     return newNode;
   }
 
+  replaceChild(newChild, oldChild) {
+    const index = this.children.indexOf(oldChild);
+    if (index !== -1) {
+      newChild.parentElement = this;
+      newChild.parentNode = this;
+      this.children[index] = newChild;
+      oldChild.parentElement = null;
+      oldChild.parentNode = null;
+    }
+    return oldChild;
+  }
+
+  replaceWith(newNode) {
+    if (this.parentElement) {
+      this.parentElement.replaceChild(newNode, this);
+    }
+  }
+
+  remove() {
+    if (this.parentElement) {
+      const index = this.parentElement.children.indexOf(this);
+      if (index !== -1) {
+        this.parentElement.children.splice(index, 1);
+      }
+      this.parentElement = null;
+      this.parentNode = null;
+    }
+  }
+
   addEventListener(event, handler) {
     if (!this.eventListeners[event]) this.eventListeners[event] = [];
     this.eventListeners[event].push(handler);
@@ -331,7 +360,7 @@ describe('script.js DOM Functions', () => {
     assert.equal(fab.style.display, 'none');
   });
 
-  test('addStremioButtonToGoogle injects Stremio CTA into watch options', () => {
+  test('addStremioButtonToGoogle replaces default watch provider with Stremio', () => {
     // Add IMDb link
     const imdbLink = global.document.createElement('a');
     imdbLink.href = 'https://www.imdb.com/title/tt0816692/';
@@ -343,9 +372,17 @@ describe('script.js DOM Functions', () => {
     const level1 = global.document.createElement('div');
     const level2 = global.document.createElement('div');
     const existingProvider = global.document.createElement('div');
-    existingProvider.textContent = 'Netflix';
+    existingProvider.textContent = 'Netflix Watch now Subscribed';
+
+    const alreadyWatched = global.document.createElement('div');
+    alreadyWatched.textContent = 'Already watched';
+
+    const wantToWatch = global.document.createElement('div');
+    wantToWatch.textContent = 'Want to watch';
 
     level2.appendChild(existingProvider);
+    level2.appendChild(alreadyWatched);
+    level2.appendChild(wantToWatch);
     level1.appendChild(level2);
     watchOption.appendChild(level1);
     global.document.body.appendChild(watchOption);
@@ -355,8 +392,10 @@ describe('script.js DOM Functions', () => {
     const cta = watchOption.querySelector('.stremio-cta__href');
     assert.ok(cta, 'Stremio CTA should be added');
     assert.equal(cta.href, 'stremio:///detail/movie/tt0816692');
-    assert.equal(level2.children.length, 2, 'Should have both Stremio and Netflix');
-    assert.equal(level2.children[1].textContent, 'Netflix', 'Netflix should remain untouched');
+    assert.equal(level2.children.length, 3, 'Should have Stremio, Already watched, Want to watch');
+    assert.ok(level2.children[0].querySelector('.stremio-cta__href'), 'First button must be Stremio');
+    assert.equal(level2.children[1].textContent, 'Already watched');
+    assert.equal(level2.children[2].textContent, 'Want to watch');
 
     // Repeated call should not duplicate
     scriptModule.addStremioButtonToGoogle();

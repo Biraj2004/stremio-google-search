@@ -218,16 +218,31 @@ const addStremioButtonToGoogle = () => {
   const stremioHref = `stremio:///detail/${encodeURIComponent(contentType)}/${encodeURIComponent(imdbCode)}`;
 
   watchOptions.forEach((watchOption) => {
-    if (watchOption.querySelector(".stremio-cta__href")) {
-      return;
-    }
-
     const container = watchOption.firstElementChild?.firstElementChild;
     if (!container) {
       return;
     }
 
-    const firstAction = container.firstElementChild;
+    const stremioHref = `stremio:///detail/${encodeURIComponent(contentType)}/${encodeURIComponent(imdbCode)}`;
+    const existingStremio = watchOption.querySelector(".stremio-cta__href");
+
+    const isWatchlistButton = (el) => {
+      const text = (el?.textContent || "").toLowerCase();
+      return text.includes("already watched") || text.includes("want to watch") || text.includes("watchlist");
+    };
+
+    if (existingStremio) {
+      existingStremio.href = stremioHref;
+      // Remove any default watch provider that might still be present alongside Stremio
+      const children = [...container.children];
+      for (const child of children) {
+        if (!child.querySelector(".stremio-cta__href") && !isWatchlistButton(child)) {
+          child.remove();
+        }
+      }
+      return;
+    }
+
     const divEle = document.createElement("div");
 
     const anchor = document.createElement("a");
@@ -255,10 +270,32 @@ const addStremioButtonToGoogle = () => {
     anchor.appendChild(ctaContainer);
     divEle.appendChild(anchor);
 
+    const firstAction = container.firstElementChild;
     if (firstAction) {
-      container.insertBefore(divEle, firstAction);
+      if (!isWatchlistButton(firstAction)) {
+        // Replace the default provider button (e.g. Netflix "Watch now") with Stremio
+        if (typeof firstAction.replaceWith === "function") {
+          firstAction.replaceWith(divEle);
+        } else if (container.replaceChild) {
+          container.replaceChild(divEle, firstAction);
+        } else {
+          container.insertBefore(divEle, firstAction);
+          firstAction.remove();
+        }
+      } else {
+        // Only watchlist buttons exist (e.g. "Already watched" & "Want to watch")
+        container.insertBefore(divEle, firstAction);
+      }
     } else {
       container.appendChild(divEle);
+    }
+
+    // Clean up any remaining non-watchlist default provider buttons
+    const remainingChildren = [...container.children];
+    for (const child of remainingChildren) {
+      if (!child.querySelector(".stremio-cta__href") && !isWatchlistButton(child)) {
+        child.remove();
+      }
     }
   });
 };
